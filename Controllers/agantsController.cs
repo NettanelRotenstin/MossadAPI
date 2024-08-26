@@ -15,7 +15,7 @@ namespace MossadAPI.Controllers
 
 
 
-    public class agantsController : ControllerBase, IControllers
+    public class agantsController : ControllerBase/*, IControllers*/
     {
         static DBContextMossadAPI _dbContext;
 
@@ -56,7 +56,7 @@ namespace MossadAPI.Controllers
 
         //start pozision by simulation
         [HttpPut("{id}/pin")]
-        public async Task<IActionResult> SetPozision(int id, position location)
+        public async Task<IActionResult> SetPozision(int id,[FromBody] position location)
         {
             Agant tmp = await _dbContext.agants.Include(a => a.location).FirstOrDefaultAsync(x => x.id == id);
            
@@ -104,32 +104,34 @@ namespace MossadAPI.Controllers
         }
 
         //get all agants count
-        [HttpGet("/count")]
+        [HttpGet("count")]
         public async Task<IActionResult> GetAllAgantCount()
         {
-            var Agants = await _dbContext.agants.Include(a => a.location).ToArrayAsync();
-             
-            return Ok(Agants.Length + 1);
+            var Agants = await _dbContext.agants.ToArrayAsync();
+
+               return Ok(Agants.Length + 1);
         }
 
 
         //get count active agants
-        [HttpGet("/Activecount")]
+        [HttpGet("Activecount")]
         public async Task<IActionResult> GetActiveAgantCount()
         {
             int i = 0;
-            var Agants = await _dbContext.agants.Include(a => a.status).ToArrayAsync();
-            while (Agants[i] != null)
+            var Agants = await _dbContext.agants.ToArrayAsync();
+            foreach (Agant agant in Agants)
             {
-                if (Agants[i].status == AgantStatusEnum.activeAgant) 
-                i++;
-            }
+                if (agant.status == AgantStatusEnum.activeAgant)
+                {
+                    i++;
+                }
+            } 
             return Ok(i);
         }
 
 
         //get relative agants targets
-        [HttpGet("/relativeCount")]
+        [HttpGet("relativeCount")]
         public async Task<IActionResult> GetRelativeAgantTargets()
         {
             var agants = await _dbContext.agants.ToArrayAsync();
@@ -142,7 +144,7 @@ namespace MossadAPI.Controllers
 
 
         //get  relative agant in roles to active missions
-        [HttpGet("/relativeAgantRoleCount")]
+        [HttpGet("relativeAgantRoleCount")]
         public async Task<IActionResult> GetRelativeAgantRole()
         {
             int relevantAgants = 0;
@@ -154,13 +156,13 @@ namespace MossadAPI.Controllers
 
             int i = 0;
 
-            while (Missions[i] != null)
-            {
+            foreach(var mission in Missions)
+            { 
 
-                if (Missions[i].status == MissionStatusEnum.offer || Missions[i].status == MissionStatusEnum.assigned)
+                if (mission.status == MissionStatusEnum.offer || mission.status == MissionStatusEnum.assigned)
                 {
                     relevantMissions++;
-                    relevantAgants += Missions[i]._agants.Count + 1;
+                    relevantAgants += mission._agants.Count + 1;
                 }
                 i++;
             }
@@ -170,7 +172,7 @@ namespace MossadAPI.Controllers
         }
 
         //return all agants details
-        [HttpGet("/allDetails")]
+        [HttpGet("allDetails")]
         public async Task<IActionResult> GetAllAgantDetails()
         {
             List<string> detailsAllAgants = new List<string>();
@@ -199,16 +201,16 @@ namespace MossadAPI.Controllers
 
             int i = 0;
 
-            Agant tmp = await _dbContext.agants.Include(a => a.nickname).Include(a => a.location).Include(a => a.status).Include(a=> a.counterKilled).FirstOrDefaultAsync(x => x.id == id);
-             
+            Agant tmp = await _dbContext.agants.Include(a => a.nickname).Include(a => a.location).Include(a => a.status).Include(a => a.counterKilled).FirstOrDefaultAsync(x => x.id == id);
 
-            if (tmp != null) 
+
+            if (tmp != null)
             {
-            
+
                 detailOneAgants += "nick name: " + tmp.nickname.ToString() + ", location: " + tmp.location.ToString() + ", status: " + tmp.status.ToString() + ", killed:" + tmp.counterKilled + "/n";
                 if (tmp.status == AgantStatusEnum.activeAgant)
                 {
-                    Mission mission = await _dbContext.missions.Include(a => a.timeLeft).Include(a => a.agent).Include(a => a.id).FirstOrDefaultAsync(x =>x.agent.id == tmp.id);
+                    Mission mission = await _dbContext.missions.Include(a => a.timeLeft).Include(a => a.agent).Include(a => a.id).FirstOrDefaultAsync(x => x.agent.id == tmp.id);
                     detailOneAgants += $" time left: {mission.timeLeft}    , link to mission: http://localhost:5227/api/missions/{mission.id}/details ";
                 }
 
@@ -218,7 +220,7 @@ namespace MossadAPI.Controllers
             {
                 return Ok("agant not found");
             }
-          
+
         }
     }
 }

@@ -35,7 +35,7 @@ namespace MossadAPI.Controllers
 
 
         //update mission status mvc
-        [HttpPut("/{id}")]
+        [HttpPut("{id}")]
         public async Task<IActionResult> SetPozision(int Id,MissionStatusEnum missionStatusEnum)
         {
             Mission tmp = await _dbContext.missions.FirstOrDefaultAsync(x => x.id == Id);
@@ -61,7 +61,7 @@ namespace MossadAPI.Controllers
 
         //update 
 
-        [HttpPut("/update")]
+        [HttpPut("update")]
         public async Task<IActionResult> Update()
         {
             var missions = await _dbContext.missions.ToListAsync();
@@ -88,31 +88,36 @@ namespace MossadAPI.Controllers
         }
 
         //get all missions  
-        [HttpGet("/count")]
+        [HttpGet("count")]
         public async Task<IActionResult> GetAllMissionsCount()
         {
-            var missions = await _dbContext.missions.Include(a => a.status).ToArrayAsync();
+            var missions = await _dbContext.missions.ToArrayAsync();
 
             return Ok(missions.Length);
         }
 
 
         //get all active missions 
-        [HttpGet("/Activecount")]
+        [HttpGet("Activecount")]
         public async Task<IActionResult> GetActiveMissionsCount()
         {
             int i = 0;
-            var misssions = await _dbContext.missions.Include(a => a.status).ToArrayAsync();
-            while (misssions[i] != null)
+            var misssions = await _dbContext.missions .ToArrayAsync();
+            foreach (var item in misssions)
             {
-                if (misssions[i].status == MissionStatusEnum.assigned)
+
+
+                if (item.status!= null && item.status == MissionStatusEnum.assigned)
+                {
                     i++;
+                }
             }
             return Ok(i);
         }
 
 
         //get  mission by agant id 
+
         [HttpGet("{id}/details")]
         public async Task<IActionResult> GetDetailsMissionId(int id)
         {
@@ -123,8 +128,8 @@ namespace MossadAPI.Controllers
             if (mission != null)
             {
 
-                missionDetails += "agant: " + mission.agent.nickname + ", target: " + mission.Target.name  + ", time left: " + mission.timeLeft.ToString() + ", status:" + mission.status + "/n";
-                
+                missionDetails += "agant: " + mission.agent.nickname + ", target: " + mission.Target.name + ", time left: " + mission.timeLeft.ToString() + ", status:" + mission.status + "/n";
+
 
                 return Ok(missionDetails);
             }
@@ -135,7 +140,7 @@ namespace MossadAPI.Controllers
 
 
 
-            
+
         }
     }
 }

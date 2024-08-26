@@ -101,24 +101,25 @@ namespace MossadAPI.Controllers
         }
 
         //get count targets
-        [HttpGet("/count")]
+        [HttpGet("count")]
         public async Task<IActionResult> GetAllTargetsCount()
         {
-            var targets = await _dbContext.targets.Include(a => a.status).ToArrayAsync();
+            var targets = await _dbContext.targets.ToArrayAsync();
 
             return Ok(targets.Length + 1);
         }
 
 
         //get  count of targets killed
-        [HttpGet("/KilledCount")]
+        [HttpGet("KilledCount")]
         public async Task<IActionResult> GetKilledTargets()
         {
             int i = 0;
-            var targets = await _dbContext.targets.Include(a => a.status).ToArrayAsync();
-            while (targets[i] != null)
+            var targets = await _dbContext.targets.ToArrayAsync();
+           foreach (var target in targets) 
             {
-                if (targets[i].status == TargetStatusEnum.killed)
+            
+                if (target.status == TargetStatusEnum.killed)
                     i++;
             }
             return Ok(i);
@@ -126,7 +127,7 @@ namespace MossadAPI.Controllers
 
 
         //return all targets details
-        [HttpGet("/allDetails")]
+        [HttpGet("allDetails")]
         public async Task<IActionResult> GetAllTargetsDetails()
         {
             List<string> detailsAlltargets = new List<string>();
