@@ -9,16 +9,16 @@ namespace MossadAPI.Models
         [Key]
         public int id {  get; set; }
 
-        public string? nickname { get; set; }
+        public string nickname { get; set; } = "";
 
-        public string? photo_url { get; set; }
+        public string photo_url { get; set; } = "";
 
         //class of x y
-        public position? location { get; set; }
+        public position? location { get; set; } = new position();
 
         //enum for status
-        public AgantStatusEnum? status { get; set; } = AgantStatusEnum.dormantAgent;
+        public AgantStatusEnum status { get; set; } = AgantStatusEnum.dormantAgent;
 
-        public int? counterKilled { get; set; }
+        public int counterKilled { get; set; } = 0;
     }
 }

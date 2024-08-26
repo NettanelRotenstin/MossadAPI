@@ -175,18 +175,19 @@ namespace MossadAPI.Controllers
         [HttpGet("allDetails")]
         public async Task<IActionResult> GetAllAgantDetails()
         {
-            List<string> detailsAllAgants = new List<string>();
+            List<AgantDetails> detailsAllAgants = new List<AgantDetails>();
 
-            string detailOneAgants = "";
+ 
+ 
+            var Agants = await _dbContext.agants
+                
+                .Include(a => a.location)
+                .ToArrayAsync();
 
-            int i = 0;
-
-            var Agants = await _dbContext.agants.Include(a => a.nickname).Include(a => a.location).Include(a => a.status).ToArrayAsync();
-
-            while (Agants[i] != null)
+            foreach(var agant in Agants)
             {
-                detailOneAgants += "nick name: " + Agants[i].nickname.ToString() + ", location: " + Agants[i].location.ToString() + ", status: " + Agants[i].status.ToString() + "/n";
-                detailsAllAgants.Add(detailOneAgants);
+                AgantDetails agantToAdd = new AgantDetails(agant.nickname, agant.location, agant.status);
+                detailsAllAgants.Add(agantToAdd);
             }
 
             return Ok(detailsAllAgants);
