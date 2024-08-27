@@ -6,16 +6,17 @@ namespace MossadAPI.Helper
 {
     public class CalculateMissionTime
     {
- 
-        private static DBContextMossadAPI _dBContext;
+
+       
+       static DBContextMossadAPI _dBContext;
 
         public CalculateMissionTime(DBContextMossadAPI dbContext)
         {
             _dBContext = dbContext;
-        }
-        public static async void CalculateforConnect(Mission mission)
+         }
+        public   async Task CalculateforConnect(Mission mission)
         {
-            double TimeLeft = CalculateConnectMission.CalculateDistance(mission.agent.location, mission.Target.location);
+            double TimeLeft = await CalculateConnectMission.CalculateDistance(mission.agent.location, mission.Target.location);
             if (TimeLeft == 0)
             {
                 mission.agent.counterKilled++;
@@ -25,7 +26,7 @@ namespace MossadAPI.Helper
             }
 
             Mission carrent = await _dBContext.missions.FirstOrDefaultAsync(s => s.id == mission.id);
-            carrent.timeLeft = TimeLeft / 5;
+            carrent.timeLeft = await CalculateConnectMission.CalculateDistance(carrent.Target.location, carrent.agent.location);
             await _dBContext.SaveChangesAsync();
         }
 
@@ -35,7 +36,7 @@ namespace MossadAPI.Helper
 
         public static async Task CalculateDirection(position agant, position target,Mission mission)
         {
-            double timeDistance = CalculateConnectMission.CalculateDistance(agant, target);
+            double timeDistance = await CalculateConnectMission.CalculateDistance(agant, target);
 
             if (agant.x == target.x)
             {

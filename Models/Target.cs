@@ -8,15 +8,15 @@ namespace MossadAPI.Models
     {
         [Key]
          public int id { get; set; }
-        
-        public string? name {  get; set; }
 
-        public string? position { get; set; }
+        public string? name { get; set; } = "";
 
-        public string? photo_url { get; set; }
+        public string? position { get; set; } = "";
 
-        public position? location { get; set; }
+        public string? photoUrl { get; set; } = "";
 
-        public TargetStatusEnum? status { get; set; }
+        public position location { get; set; } = new position();
+
+        public TargetStatusEnum status { get; set; } = TargetStatusEnum.alive;
     }
 }

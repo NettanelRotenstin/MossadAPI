@@ -10,6 +10,8 @@ namespace MossadAPI.Models
 
         public AgantStatusEnum status { get; set; } = AgantStatusEnum.dormantAgent;
 
+        public string LinkToMission { get; set; } = "";
+        public AgantDetails() { }
         public AgantDetails(string NickName,position Position,AgantStatusEnum agantStatusEnum) 
         {
             nickname = NickName;

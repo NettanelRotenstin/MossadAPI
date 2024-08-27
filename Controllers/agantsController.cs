@@ -18,12 +18,14 @@ namespace MossadAPI.Controllers
     public class agantsController : ControllerBase/*, IControllers*/
     {
         static DBContextMossadAPI _dbContext;
+        CalculateConnectMission _calculateConnectMission;
 
-        public agantsController(DBContextMossadAPI dbContext)
+
+        public agantsController(DBContextMossadAPI dbContext, CalculateConnectMission calculateConnectMission)
         {
             _dbContext = dbContext;
+            _calculateConnectMission = calculateConnectMission;
         }
-        CalculateConnectMission calculateConnectMission = new CalculateConnectMission(_dbContext);
 
         
 
@@ -38,7 +40,7 @@ namespace MossadAPI.Controllers
             await _dbContext.SaveChangesAsync();
 
             //called to static func that check the missions 
-                calculateConnectMission.CheckMission();
+             await _calculateConnectMission.CheckMission();
              return StatusCode(StatusCodes.Status201Created, new { newAgant = agant });
         }
 
@@ -70,7 +72,7 @@ namespace MossadAPI.Controllers
 
             //called to static func that check the missions 
 
-            calculateConnectMission.CheckMission();
+              _calculateConnectMission.CheckMission();
 
 
             return StatusCode(StatusCodes.Status202Accepted, new { massage = "location sets"});
@@ -96,7 +98,7 @@ namespace MossadAPI.Controllers
 
             //called to static func that check the missions 
 
-              calculateConnectMission.CheckMission();
+                _calculateConnectMission.CheckMission();
 
 
             return StatusCode(StatusCodes.Status202Accepted, new { massage = "location update" });
@@ -180,14 +182,24 @@ namespace MossadAPI.Controllers
  
  
             var Agants = await _dbContext.agants
-                
                 .Include(a => a.location)
                 .ToArrayAsync();
+
+            
 
             foreach(var agant in Agants)
             {
                 AgantDetails agantToAdd = new AgantDetails(agant.nickname, agant.location, agant.status);
+
+                Mission mission = await _dbContext.missions.FirstOrDefaultAsync(a => a.agent.id == agant.id);
+                
+                if (mission != null)
+                {
+                    agantToAdd.LinkToMission = $"http://localhost:5157/api/missions/{mission.id}/details";
+                }
+
                 detailsAllAgants.Add(agantToAdd);
+                await _dbContext.SaveChangesAsync();
             }
 
             return Ok(detailsAllAgants);
@@ -198,24 +210,28 @@ namespace MossadAPI.Controllers
         public async Task<IActionResult> GetAgantDetails(int id)
         {
 
-            string detailOneAgants = "";
+            AgantDetails agantDetails = new AgantDetails();
 
-            int i = 0;
+            
 
-            Agant tmp = await _dbContext.agants.Include(a => a.nickname).Include(a => a.location).Include(a => a.status).Include(a => a.counterKilled).FirstOrDefaultAsync(x => x.id == id);
+            Agant tmp = await _dbContext.agants.Include(a => a.location).FirstOrDefaultAsync(x => x.id == id);
 
 
             if (tmp != null)
             {
 
-                detailOneAgants += "nick name: " + tmp.nickname.ToString() + ", location: " + tmp.location.ToString() + ", status: " + tmp.status.ToString() + ", killed:" + tmp.counterKilled + "/n";
+                agantDetails.nickname = tmp.nickname;
+                agantDetails.position = tmp.location;
+                agantDetails.status = tmp.status;
+                
+                
                 if (tmp.status == AgantStatusEnum.activeAgant)
                 {
-                    Mission mission = await _dbContext.missions.Include(a => a.timeLeft).Include(a => a.agent).Include(a => a.id).FirstOrDefaultAsync(x => x.agent.id == tmp.id);
-                    detailOneAgants += $" time left: {mission.timeLeft}    , link to mission: http://localhost:5227/api/missions/{mission.id}/details ";
+                    Mission mission = await _dbContext.missions.Include(a => a.agent).FirstOrDefaultAsync(x => x.agent.id == tmp.id);
+                    agantDetails.LinkToMission = $"http://localhost:5157/api/missions/{tmp.id}/details";
                 }
 
-                return Ok(detailOneAgants);
+                return Ok(agantDetails);
             }
             else
             {

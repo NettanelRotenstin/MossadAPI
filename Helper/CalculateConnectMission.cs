@@ -8,7 +8,7 @@ namespace MossadAPI.Helper
 {
     public class CalculateConnectMission
     {
-        private static DBContextMossadAPI _dBContext;
+        private   DBContextMossadAPI _dBContext;
 
         public CalculateConnectMission(DBContextMossadAPI dbContext)
         {
@@ -16,61 +16,62 @@ namespace MossadAPI.Helper
         }
 
 
-        public  async Task CheckMission()
+        public async Task CheckMission()
         {
-            List<Agant> agants = await _dBContext.agants.ToListAsync();
+            List<Agant> agants = await _dBContext.agants.Include(a => a.location).ToListAsync();
             List<Target> targets = await _dBContext.targets.ToListAsync();
             List<Agant> _relevantAgants = new List<Agant>();
             Agant relevantAgant = new Agant();
             Target relevantTarget = new Target();
-            bool flag = false;
+       
             double minFar = 201;
-            double result = 0;
-            for (int i = 0; i < agants.Count; i++)
+             
+            foreach(Agant agant in agants) 
             {
-                if (agants[i].status == AgantStatusEnum.activeAgant)
+                if (agant.status == AgantStatusEnum.activeAgant)
                 {
                     continue;
                 }
-                for (int j = 0; j < targets.Count; j++)
+                foreach(Target target in targets)
                 {
-                    if (targets[j].status == TargetStatusEnum.killed)
+                    if (target.status == TargetStatusEnum.killed)
                     {
 
                         continue; 
                     }
-                    if (CalculateDistanceBool(agants[i].location, targets[j].location))
+                    if (await CalculateDistanceBool(agant.location, target.location))
                     {
-                        flag = true;
-                        _relevantAgants.Add(agants[i]);
-                        result = CalculateDistance(agants[i].location, targets[j].location);
-                        if (result < minFar)
-                        {
-                            relevantTarget = targets[j];
-                            relevantAgant = agants[i];
+                        
+                            _relevantAgants.Add(agant);
+                            double result = await CalculateDistance(agant.location, target.location);
+                         
+                            relevantTarget = target;
+                            relevantAgant = agant;
                             minFar = result;
-                        }
+                            Mission mission = new Mission();
+                           
+                            mission.agent = relevantAgant;
+                            mission.Target = relevantTarget;
+                            mission.status = MissionStatusEnum.offer;
+                            mission._agants.Add(relevantAgant);
+                           
+                            mission.timeLeft =  await CalculateDistance(mission.Target.location,mission.agent.location);
+                            await _dBContext.missions.AddAsync(mission);
+                            await _dBContext.SaveChangesAsync();
+                        
                     }
                 }
             }
-            if (flag)
-            {
-                Mission mission = new Mission();
-                mission.agent = relevantAgant;
-                mission.Target = relevantTarget;
-                mission.status = MissionStatusEnum.offer;
-                mission._agants.Add(relevantAgant);
-                mission._agants = _relevantAgants;
-            }
+            
              
         }
 
 
 
 
-        public static bool CalculateDistanceBool(position location_1, position location_2)
+        public static async Task<bool> CalculateDistanceBool(position location_1, position location_2)
         {
-            double result = CalculateDistance(location_1,location_2);
+            double result = await CalculateDistance(location_1,location_2);
             if (result <= 200)
             {
                 return true;
@@ -81,7 +82,7 @@ namespace MossadAPI.Helper
         
    
     
-        public static double CalculateDistance(position location_1, position location_2)
+        public static async Task<double> CalculateDistance(position location_1, position location_2)
         {
             double result = Math.Sqrt(Math.Pow(location_1.x - location_2.x, 2)
                + Math.Pow(location_1.y - location_2.y, 2));

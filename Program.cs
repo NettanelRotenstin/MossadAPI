@@ -6,6 +6,7 @@ using MossadAPI.Controllers;
 using MossadAPI.Helper;
 
 
+
 var builder = WebApplication.CreateBuilder(args);
 //adding the connect to db
 
@@ -16,13 +17,15 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 string? connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-builder.Services.AddDbContext<DBContextMossadAPI>(options => options.UseSqlServer(connectionString));
+builder.Services.AddDbContext<DBContextMossadAPI>(options => options.UseSqlServer(connectionString).UseValidationCheckConstraints());
 // Add services to the container.
 builder.Services.AddScoped<DBContextMossadAPI>();
 builder.Services.AddScoped<missionsController>();
 builder.Services.AddScoped<targetsController>();
 builder.Services.AddScoped<agantsController>();
-builder.Services.AddScoped<CalculateConnectMission>();builder.Services.AddScoped<CalculateMissionTime>();
+builder.Services.AddScoped<CalculateMissionTime>();
+builder.Services.AddScoped<CalculateConnectMission>();
+
 
 
 
@@ -39,16 +42,11 @@ app.UseHttpsRedirection();
 
 app.UseAuthorization();
 
-//app.UseMiddleware<auth>();
+//app.UseMiddleware<JwtAuth>();
 
-//app.UseWhen(
-//    context =>
-//        context.Request.Path.StartsWithSegments("/api/targets"),
-//    appBuilder =>
-//    {
-//        appBuilder.UseMiddleware<auth>();
-//        appBuilder.UseMiddleware<JwtAuth>();
-//    });
+ 
+
+ 
 app.MapControllers();
 
 app.Run();

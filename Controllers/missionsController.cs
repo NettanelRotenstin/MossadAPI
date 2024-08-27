@@ -14,6 +14,8 @@ namespace MossadAPI.Controllers
     {
         static DBContextMossadAPI _dbContext;
 
+        CalculateMissionTime _calculateMissionTime;
+
         public missionsController(DBContextMossadAPI dbService)
         {
             _dbContext = dbService;
@@ -36,26 +38,26 @@ namespace MossadAPI.Controllers
 
         //update mission status mvc
         [HttpPut("{id}")]
-        public async Task<IActionResult> SetPozision(int Id,MissionStatusEnum missionStatusEnum)
+        public async Task<IActionResult> SetPozision(int id,MissionStatusEnum missionStatusEnum )
         {
-            Mission tmp = await _dbContext.missions.FirstOrDefaultAsync(x => x.id == Id);
+            var tmp = await _dbContext.missions.FirstOrDefaultAsync(x => x.id == id);
 
             if (tmp == null)
             {
                 return StatusCode(404, new { massage = "mission not found" });
             }
-            if(!CalculateConnectMission.CalculateDistanceBool(tmp.agent.location,tmp.Target.location))
+            if(!await CalculateConnectMission.CalculateDistanceBool(tmp.agent.location,tmp.Target.location))
                 {
                 _dbContext.missions.Remove(tmp);
                 return StatusCode(StatusCodes.Status404NotFound, new { massage = "agant too far from target" });
 
                 }
-            tmp.status = missionStatusEnum;
-            tmp.timeLeft = CalculateConnectMission.CalculateDistance(tmp.agent.location, tmp.Target.location);
+            tmp.status = MissionStatusEnum.assigned;
+            tmp.timeLeft = await CalculateConnectMission.CalculateDistance(tmp.agent.location, tmp.Target.location);
+            tmp.agent.status = AgantStatusEnum.activeAgant;
+            await _dbContext.SaveChangesAsync();
 
-            _dbContext.SaveChanges();
-
-            return StatusCode(StatusCodes.Status202Accepted, new { massage = "status updated" });
+            return StatusCode(StatusCodes.Status202Accepted, new { massage = "status updated agant is on the way!" });
 
         }
 
@@ -70,15 +72,16 @@ namespace MossadAPI.Controllers
             {
                 return StatusCode(404, new { massage = "mission not found" });
             }
-            for (int i = 0; i < missions.Count; i++)
+            foreach(var mission in missions) 
             {
-                if (missions[i].status != MissionStatusEnum.assigned)
-                {
-                    continue;
-                    CalculateMissionTime.CalculateforConnect(missions[i]);
+            
+                 
+                    mission.timeLeft = await CalculateConnectMission.CalculateDistance(mission.agent.location, mission.Target.location);
+                     
                 }
+                 
                
-            }
+            
 
  
             _dbContext.SaveChanges();
@@ -137,10 +140,37 @@ namespace MossadAPI.Controllers
             {
                 return Ok("mission not found");
             }
+           }
 
 
 
+        [HttpGet("allMissions")]
+        public async Task<IActionResult> GetAllMissionsDetails()
+        {
+            List<missionDetails> details = new List<missionDetails>();
 
+
+
+            var Missions = await _dbContext.missions
+                 .Include(a => a._agants)
+                .Include(a => a.agent)
+                .Include(a => a.Target)
+                .ToArrayAsync();
+
+
+
+            foreach (Mission mission in Missions)
+            {
+                missionDetails missionToAdd = new missionDetails(mission.id,mission.agent,mission.Target,mission.timeLeft,mission.status, mission._agants);
+
+ 
+            
+
+                details.Add(missionToAdd);
+                await _dbContext.SaveChangesAsync();
+            }
+
+            return Ok(details);
         }
     }
 }

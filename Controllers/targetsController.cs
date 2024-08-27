@@ -13,12 +13,13 @@ namespace MossadAPI.Controllers
     public class targetsController : ControllerBase, IControllers
     {
         static DBContextMossadAPI _dbContext;
-
-        public targetsController(DBContextMossadAPI dbContext)
+        CalculateConnectMission _calculateConnectMission; 
+        public targetsController(DBContextMossadAPI dbContext, CalculateConnectMission calculateConnectMission)
         {
             _dbContext = dbContext;
+            _calculateConnectMission = calculateConnectMission;
         }
-        CalculateConnectMission calculateConnectMission = new CalculateConnectMission(_dbContext);
+       
 
 
 
@@ -36,8 +37,8 @@ namespace MossadAPI.Controllers
 
             //called to static func that check the missions 
 
-            calculateConnectMission.CheckMission();
-
+            await _calculateConnectMission.CheckMission();
+            
             return StatusCode(StatusCodes.Status201Created, new { newTarget = target });
         }
 
@@ -70,7 +71,7 @@ namespace MossadAPI.Controllers
 
             //called to static func that check the missions 
 
-            calculateConnectMission.CheckMission();
+            await _calculateConnectMission.CheckMission();
 
 
             return StatusCode(StatusCodes.Status202Accepted, new { massage = "location sets" });
@@ -94,7 +95,7 @@ namespace MossadAPI.Controllers
 
             //called to static func that check the missions 
 
-            calculateConnectMission.CheckMission();
+            await _calculateConnectMission.CheckMission();
 
 
             return StatusCode(StatusCodes.Status202Accepted, new { massage = "location update" });
@@ -130,24 +131,29 @@ namespace MossadAPI.Controllers
         [HttpGet("allDetails")]
         public async Task<IActionResult> GetAllTargetsDetails()
         {
-            List<string> detailsAlltargets = new List<string>();
+            List<targetDetails> detailsAlltargets = new List<targetDetails>();
 
-            string detailOneTarget = "";
+ 
+ 
+            var targets = await _dbContext.targets 
+                .Include(a => a.location).ToArrayAsync();
 
-            int i = 0;
-
-            var targets = await _dbContext.targets.Include(a => a.position).Include(a => a.location).Include(a => a.status).ToArrayAsync();
-
-            while (targets[i] != null)
+            foreach(var target in targets)
             {
-                detailOneTarget += "position: " + targets[i].position.ToString() + ", location:" + targets[i].location.ToString() + ", status:" + targets[i].status.ToString() + "/n";
-                detailsAlltargets.Add(detailOneTarget);
+                targetDetails targetDetails = new targetDetails();
+                targetDetails.name = target.name;
+                targetDetails.position = target.location;
+                targetDetails.status = target.status;
+
+
+                
+                detailsAlltargets.Add(targetDetails);
             }
 
             return Ok(detailsAlltargets);
         }
 
-
+         
 
 
         [HttpGet("{id}/allDetails")]

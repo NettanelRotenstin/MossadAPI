@@ -11,7 +11,7 @@ namespace MossadAPI.Models
 
         public string nickname { get; set; } = "";
 
-        public string photo_url { get; set; } = "";
+        public string photoUrl { get; set; } = "";
 
         //class of x y
         public position? location { get; set; } = new position();
@@ -19,6 +19,6 @@ namespace MossadAPI.Models
         //enum for status
         public AgantStatusEnum status { get; set; } = AgantStatusEnum.dormantAgent;
 
-        public int counterKilled { get; set; } = 0;
+        public int? counterKilled { get; set; } = 0;
     }
 }
